@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Opportunities</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231d4ed8'/%3E%3Cpath d='M9 22V10h6.2a4.2 4.2 0 0 1 0 8.4H12' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/js/theme.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <nav class="nav" id="nav" aria-label="Sections">
+          <button data-tab="overview" class="active">Overview</button>
+          <button data-tab="opportunities">Opportunities <span class="count" id="count-opps"></span></button>
+          <button data-tab="tracking">Tracking list <span class="count" id="count-tracking"></span></button>
+          <button data-tab="agencies">Agencies</button>
+          <button data-tab="market">Market</button>
+          <button data-tab="grants">Grants <span class="count" id="count-grants"></span></button>
+          <button data-tab="research">Research <span class="count" id="count-research"></span></button>
+        </nav>
+
+        <div class="data-status">
+          <div class="data-status-line" id="data-status">Loading…</div>
+          <button class="btn primary block" id="refresh-btn" type="button">Refresh data</button>
+          <button class="link-btn" id="resync-btn" type="button" title="Pull the whole look-back window again instead of only what is new. Uses more of the HigherGov record allowance.">Full re-sync</button>
+          <div class="quota" id="quota">
+            <div class="quota-bar"><span id="quota-fill"></span></div>
+            <div class="quota-text"><span id="quota-text"></span> <button class="link-btn" id="quota-fix" type="button" style="font-size:11.5px">Correct</button></div>
+          </div>
+          <button class="link-btn theme-btn" id="theme-btn" type="button"></button>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="notice hidden" id="notice"></div>
+
+        <section id="loading" class="loading">
+          <div class="spinner"></div>
+          <h2 id="loading-title">Loading</h2>
+          <p id="loading-detail"></p>
+        </section>
+
+        <!-- OVERVIEW -->
+        <section class="panel" data-panel="overview" hidden>
+          <header class="page-head">
+            <h1>Overview</h1>
+          </header>
+          <div class="stats" id="stats-overview"></div>
+          <div class="grid two">
+            <article class="card">
+              <header><h2>Due soon</h2></header>
+              <ul class="rows" id="list-due"></ul>
+            </article>
+            <article class="card">
+              <header><h2>Forecasts coming up</h2></header>
+              <ul class="rows" id="list-forecast"></ul>
+            </article>
+          </div>
+          <article class="card">
+            <header><h2>Notices posted per week</h2><div class="legend" id="legend-flow"></div></header>
+            <div class="chart" id="chart-flow"></div>
+          </article>
+          <div class="grid two">
+            <article class="card">
+              <header><h2>Where the demand is</h2><span class="hint">Notices by agency and focus area</span></header>
+              <div id="matrix"></div>
+            </article>
+            <article class="card">
+              <header><h2>Recompetes to watch</h2><span class="hint">Ending within 18 months</span></header>
+              <ul class="rows" id="list-recompete"></ul>
+            </article>
+          </div>
+        </section>
+
+        <!-- OPPORTUNITIES -->
+        <section class="panel" data-panel="opportunities" hidden>
+          <header class="page-head">
+            <div>
+              <h1>Opportunities</h1>
+              <p id="results-meta"></p>
+            </div>
+            <button class="btn" id="export-csv" type="button">Export CSV</button>
+          </header>
+          <div class="toolbar">
+            <input id="search" class="search" type="search" placeholder="Search title, description, agency, NAICS, PSC, solicitation number" autocomplete="off" />
+            <div class="filters">
+              <div class="segmented" id="filter-status">
+                <button data-v="actionable" class="active">Open + forecast</button>
+                <button data-v="open">Open</button>
+                <button data-v="forecast">Forecast</button>
+                <button data-v="all">All</button>
+              </div>
+              <select id="filter-agency" aria-label="Agency"></select>
+              <select id="filter-setaside" aria-label="Set-aside">
+                <option value="any">Any set-aside</option>
+                <option value="small">Small-business set-asides</option>
+                <option value="none">Full and open</option>
+              </select>
+              <label class="check"><input type="checkbox" id="filter-relevant" checked /> Focus areas only</label>
+              <label class="check"><input type="checkbox" id="filter-tracked" /> Tracking list</label>
+              <label class="check"><input type="checkbox" id="filter-saved" /> Saved</label>
+            </div>
+            <div class="chips" id="filter-themes"></div>
+          </div>
+          <div class="card flush">
+            <table class="table" id="opp-table">
+              <thead>
+                <tr>
+                  <th class="star-col"></th>
+                  <th data-sort="title">Opportunity</th>
+                  <th data-sort="type">Type</th>
+                  <th>Focus</th>
+                  <th data-sort="fit" class="num" title="How strongly the notice matches your focus areas, 0 to 100">Fit</th>
+                  <th data-sort="postedDate">Posted</th>
+                  <th data-sort="dueDate">Due / expected</th>
+                  <th data-sort="value" class="num">Est. value</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- TRACKING LIST -->
+        <section class="panel" data-panel="tracking" hidden>
+          <header class="page-head">
+            <div>
+              <h1>Tracking list</h1>
+              <p id="tracking-meta"></p>
+            </div>
+          </header>
+          <div class="toolbar">
+            <input id="tracking-search" class="search" type="search" placeholder="Search effort, scope, incumbent, team notes" autocomplete="off" />
+            <div class="filters">
+              <select id="tracking-org" aria-label="Organisation"></select>
+              <label class="check"><input type="checkbox" id="tracking-active" /> With notices or awards only</label>
+              <label class="check"><input type="checkbox" id="tracking-priority" /> High priority</label>
+            </div>
+          </div>
+          <div class="card flush">
+            <table class="table" id="tracking-table">
+              <thead>
+                <tr><th>Effort</th><th>Scope</th><th>Incumbent and team</th><th>Timing</th><th>In the data</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- AGENCIES -->
+        <section class="panel" data-panel="agencies" hidden>
+          <header class="page-head">
+            <div>
+              <h1 id="agency-title">Agencies</h1>
+              <p id="agency-sub"></p>
+            </div>
+            <div class="segmented" id="agency-picker"></div>
+          </header>
+          <div class="stats" id="stats-agency"></div>
+          <div class="grid two">
+            <article class="card">
+              <header><h2>Contract obligations by fiscal year</h2><span class="hint">USAspending. The lighter bar is the year to date.</span></header>
+              <div class="chart" id="chart-agency-fy"></div>
+            </article>
+            <article class="card">
+              <header><h2>Top vendors</h2><span class="hint">Obligations, <span class="window-label"></span>. Click a vendor to research it.</span></header>
+              <div class="chart" id="chart-agency-vendors"></div>
+            </article>
+          </div>
+          <div class="grid two">
+            <article class="card">
+              <header><h2>What it buys</h2><span class="hint">Obligations by product or service code, <span class="window-label"></span></span></header>
+              <div class="chart" id="chart-agency-psc"></div>
+            </article>
+            <article class="card">
+              <header><h2 id="agency-third-title">Contract vehicles</h2><span class="hint" id="agency-third-hint"></span></header>
+              <div class="chart" id="chart-agency-third"></div>
+            </article>
+          </div>
+          <article class="card">
+            <header><h2>When the largest contracts end</h2><span class="hint">Start to potential end date. The tick marks the current end date.</span></header>
+            <div class="chart" id="chart-agency-timeline"></div>
+          </article>
+          <article class="card flush">
+            <header><h2>Largest contracts</h2><span class="hint" id="agency-contracts-hint"></span></header>
+            <table class="table" id="agency-contracts">
+              <thead>
+                <tr><th>Contract</th><th>Vendor</th><th>Focus</th><th>Vehicle</th><th>Ends</th><th class="num">Potential value</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </article>
+        </section>
+
+        <!-- MARKET -->
+        <section class="panel" data-panel="market" hidden>
+          <header class="page-head">
+            <div>
+              <h1>Market</h1>
+              <p>Government-wide contract spending by focus area (USAspending). Areas overlap, so don't add the totals.</p>
+            </div>
+          </header>
+          <div class="stats" id="stats-market"></div>
+          <article class="card">
+            <header><h2>Obligations by fiscal year</h2><div class="legend" id="legend-trend"></div></header>
+            <div class="chart" id="chart-trend"></div>
+          </article>
+          <div class="subhead">
+            <h2>Who buys and who wins</h2>
+            <div class="segmented" id="market-theme"></div>
+          </div>
+          <div class="grid two">
+            <article class="card">
+              <header><h2>Top buying agencies</h2><span class="hint"><span class="window-label"></span></span></header>
+              <div class="chart" id="chart-market-agencies"></div>
+            </article>
+            <article class="card">
+              <header><h2>Top vendors</h2><span class="hint"><span class="window-label"></span>. Click a vendor to research it.</span></header>
+              <div class="chart" id="chart-market-vendors"></div>
+            </article>
+          </div>
+          <article class="card flush">
+            <header><h2>Large awards ending within 18 months</h2><span class="hint">Across all focus areas. Click a row for details.</span></header>
+            <table class="table" id="expiring-table">
+              <thead>
+                <tr><th>Award</th><th>Incumbent</th><th>Agency</th><th>Focus</th><th>Ends</th><th class="num">Award amount</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </article>
+        </section>
+
+        <!-- GRANTS -->
+        <section class="panel" data-panel="grants" hidden>
+          <header class="page-head">
+            <div>
+              <h1>Grants</h1>
+              <p id="grants-meta"></p>
+            </div>
+            <label class="check"><input type="checkbox" id="grants-title-only" checked /> Only titles that match a focus area</label>
+          </header>
+          <div class="stats" id="stats-grants"></div>
+          <article class="card">
+            <header><h2>Programs by agency</h2><span class="hint">Posted and forecasted on Grants.gov</span></header>
+            <div class="chart" id="chart-grant-agencies"></div>
+          </article>
+          <div class="card flush">
+            <table class="table" id="grants-table">
+              <thead>
+                <tr><th>Grant</th><th>Agency</th><th>Focus</th><th>Status</th><th>Opens</th><th>Closes</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- RESEARCH -->
+        <section class="panel" data-panel="research" hidden>
+          <header class="page-head">
+            <div>
+              <h1>Research</h1>
+              <p id="research-sub"></p>
+            </div>
+          </header>
+          <form class="card composer" id="composer">
+            <div class="segmented" id="composer-kind">
+              <button type="button" data-v="question" class="active">Ask a question</button>
+              <button type="button" data-v="company">Research a company</button>
+            </div>
+            <textarea id="composer-input" rows="2" maxlength="2000"></textarea>
+            <div class="composer-actions">
+              <span class="hint" id="composer-hint"></span>
+              <button class="btn" type="button" id="composer-contacts">Find contacts</button>
+              <button class="btn primary" type="submit" id="composer-analyze">Analyze</button>
+            </div>
+          </form>
+          <div class="research-layout">
+            <aside class="card flush history">
+              <header><h2>Reports</h2></header>
+              <ul class="history-list" id="history"></ul>
+            </aside>
+            <article class="card report" id="report"></article>
+          </div>
+        </section>
+
+        <footer class="footer" id="footer"></footer>
+      </main>
+    </div>
+
+    <aside class="drawer" id="drawer" aria-hidden="true">
+      <div class="drawer-backdrop" data-close></div>
+      <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+        <button class="drawer-close" data-close aria-label="Close">×</button>
+        <div id="drawer-body"></div>
+      </div>
+    </aside>
+
+    <div class="tooltip" id="tooltip" role="tooltip"></div>
+
+    <script src="/vendor/d3.min.js"></script>
+    <script type="module" src="/js/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "opportunity-desk",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local dashboard of federal contract opportunities, incumbents and spending for the agencies and focus areas in focus.config.js. Data is stored in SQLite and refreshed on demand; AI research runs through the OpenAI API.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.11.1",
+    "d3": "^7.9.0"
+  }
+}

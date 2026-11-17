@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Secrets. The HigherGov and OpenAI keys live in ./key (or .env).
+# Never commit these.
+/key
+/key.*
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+credentials.json
+secrets.json
+
+# Local database (includes saved notices and research reports)
+data/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+
+# Logs and OS/editor junk
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
